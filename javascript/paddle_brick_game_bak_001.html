@@ -1,0 +1,273 @@
+<html>
+<head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+</head>
+<body>
+<p align=center>
+<a href="https://kidshideaway.net">More like this at kidshideaway.net</a><br>
+<canvas id="gameCanvas" width="500" height="500">
+</canvas>
+
+<script> 
+// background container
+var canvas;
+var canvasContext;
+
+// ball
+var ballX = 50;
+var ballY = 50;
+var ballSpeedX = 10;
+var ballSpeedY = 5;
+
+// paddle
+var paddleWidth = 100;
+var paddleHeight = 10;
+var paddleSpeed = 5;
+var paddleBottomY = 0;
+var paddleX = 0;
+var paddleY = 500;
+
+// bricks
+var bricksArray = [];
+var brickWidth = 50;
+var brickHeight = 20;
+var brickX = 0;
+var brickY = 0;
+var drawBrickColor  = "993399"
+var howManyBricksPerRow =0;
+var howMayBrickRows = 0;
+var numBricks = 0;
+
+// game play variables
+var playerLives = 2;
+var player1Score = 0; 
+
+// scoreboard
+var scoreboardWidth = 100;
+var scoreboardHeight = 30;
+var scoreboardX = 0;
+var scoreboardY = 0;
+var WinningScore = 3;
+
+window.onload = function()
+{
+    console.log("Hello World!");
+    canvas = document.getElementById('gameCanvas');
+    canvasContext = canvas.getContext('2d');
+    
+    console.log("draw background");
+    canvasContext.fillStyle = "#000000";
+    canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+     
+    initBlocks();
+    initPaddle();
+    initBall();  
+    
+    var framesPerSecond = 30;
+    myTimer = setInterval(callBoth, 1000/framesPerSecond);
+    
+    canvas.addEventListener('mousemove', 
+        function(evt) {
+            var mousePos = calcluateMousePos(evt);
+            paddleX = mousePos.x - (paddleWidth/2);
+        });    
+}
+
+function initPaddle()
+{
+    // green paddle // left paddle
+    paddle1X = 0;
+    paddle1Y = canvas.height - paddleHeight;
+}
+function initBlocks()
+{  
+    // bricksArray bricksWidth bricksHeight brickX brickY 
+    howManyBricksPerRow = (canvas.width/brickWidth)-1;
+    howMayBrickRows = (canvas.height/5)/brickHeight;
+    numBricks = 0; 
+    var workingOffset = brickWidth/howManyBricksPerRow; 
+     
+    for(var r=0; r< howMayBrickRows; r++)
+    { 
+        for(var i=0; i<howManyBricksPerRow; i++)
+        {        
+            if(i==0)
+            {
+                offset = 0;
+                brickX = 0;
+            }else{
+                offset = workingOffset;
+                brickX =  brickX + brickWidth +offset; // create next brick            
+            }
+
+            if(numBricks==0)
+            {
+                brickX = i;
+                brickY = i; 
+            }    
+           
+            bricksArray[numBricks]= [ r, i , 1, (brickX), (brickY) ]
+            numBricks = numBricks +1;
+        }
+        brickX = 0; 
+        offset = workingOffset;
+        brickY = brickY + brickHeight+offset; // move to a new row.                
+    }
+    drawBricks(); 
+}
+
+function drawBricks()
+{     
+    for(var n=0; n< numBricks; n++)
+    { 
+        // slot 0 = row
+        // slot 1 = column
+        // slot 2 = on or off
+        // slot 3 = X position
+        // slot 4 = Y position
+        if( bricksArray[n][2] == 1)
+        {                
+            leftX = bricksArray[n][3]; //brickX
+            topY = bricksArray[n][4]; //brickY
+            // bricksArray[n]= [ r, i , 1, brickX, brickY ]                       
+            colorRect(leftX, topY, brickWidth, brickHeight, "#"+drawBrickColor);            
+        }                                 
+    }  
+}
+
+function initBall()
+{ 
+    ballReset();
+}
+  
+       
+function callBoth()
+{
+    moveEverything();
+    drawEverything();
+} 
+
+function ballReset()
+{      
+    ballX = canvas.width/2;
+    ballY = canvas.height/2; 
+    ballSpeedY = ((-1)*ballSpeedY);  
+}
+
+function computerMovement()
+{
+     
+}
+
+
+
+function moveEverything()
+{         
+    // Canvas border bounce  - collision detection
+    // horizontal checks
+    if( ballX > canvas.width )  // right side  
+    {    
+        ballSpeedX = ((-1)*ballSpeedX);          
+    }   
+    else if( ballX < 0 ) // left side 
+    {    
+        ballSpeedX = ((-1)*ballSpeedX);          
+    }
+    ballX = ballX + ballSpeedX;
+    
+    
+    // Vertical checks
+    if( ballY < 0 ) // top of screen
+    {
+        ballSpeedY = ((-1)*ballSpeedY);        
+    }
+    else if( ballY > canvas.height ) // bottom of screen
+    {
+        ballReset();
+        // FIXME: should be ballreset();
+    } 
+    ballY = ballY + ballSpeedY;     
+         
+}
+
+
+function colorRect(leftX, topY, width, height, drawColor)
+{    
+    canvasContext.fillStyle = drawColor;
+    canvasContext.fillRect(leftX, topY, width, height);
+}
+function colorCircle(centerX, centerY, radius, drawColor)
+{    
+    canvasContext.fillStyle = drawColor;
+    canvasContext.beginPath();
+    canvasContext.arc(centerX, centerY, radius, 0 , Math.PI*2, true);
+    canvasContext.fill();
+}
+
+function colorScoreBoard(scoreContent, scoreboardX, scoreboardY,  scoreboardWidth, scoreboardHeight, newColor)
+{   
+    colorRect(scoreboardX, scoreboardY, scoreboardWidth, scoreboardHeight, newColor);
+    canvasContext.fillStyle = "#FFFFFF";
+    canvasContext.fillText(scoreContent, scoreboardX+10, scoreboardY+15, 800);
+}
+
+function gameOverBoard(scoreContent, scoreboardX, scoreboardY,  scoreboardWidth, scoreboardHeight, newColor)
+{
+    colorRect(scoreboardX, scoreboardY, scoreboardWidth, scoreboardHeight, newColor);
+    //canvasContext.font = "55px Verdana";
+    canvasContext.font="italic small-caps bold 50px Verdana";
+    // Create gradient
+    var gradient = canvasContext.createLinearGradient(0, 0, canvas.width, 0);
+    gradient.addColorStop("0"," magenta");
+    gradient.addColorStop("0.5", "blue");
+    gradient.addColorStop("1.0", "red");
+    // Fill with gradient
+    canvasContext.fillStyle = gradient;
+    canvasContext.fillText(scoreContent, scoreboardX+5, scoreboardY+60);
+}
+
+function playerWinsBoard(scoreContent, scoreboardX, scoreboardY,  scoreboardWidth, scoreboardHeight, newColor)
+{
+    colorRect(scoreboardX, scoreboardY, scoreboardWidth, scoreboardHeight, newColor);
+    //canvasContext.font = "55px Verdana";
+    canvasContext.font="italic small-caps bold 50px Verdana";
+    // Create gradient
+    var gradient = canvasContext.createLinearGradient(0, 0, canvas.width, 0);
+    gradient.addColorStop("0"," magenta");
+    gradient.addColorStop("0.5", "blue");
+    gradient.addColorStop("1.0", "red");
+    // Fill with gradient
+    canvasContext.fillStyle = gradient;
+    canvasContext.fillText(scoreContent, scoreboardX+5, scoreboardY+60);
+}
+
+function drawEverything()
+{    
+    // background
+    colorRect(0, 0, canvas.width, canvas.height, "#000000");   
+ 
+    // purple paddle
+    colorRect(paddleX, paddleY, paddleWidth, paddleHeight, "#e600e6");
+
+    // red ball 
+    colorCircle(ballX, ballY, 10, "#ff0066");
+    
+    // Bricks    
+    drawBricks();  
+        
+}
+
+// only collects mouse inputs for the playable space or background canvas size automatically.
+function calcluateMousePos(evt)
+{
+    var rect = canvas.getBoundingClientRect();
+    var root = document.documentElement;
+    var mouseX = evt.clientX - rect.left - root.scrollLeft;
+    var mouseY = evt.clientY - rect.top - root.scrollTop;
+    return{ x:mouseX, y:mouseY };
+}
+
+
+</script>
+</html>
